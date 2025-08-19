@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	client "github.com/auh-xda/magnesia/helpers/client"
 	console "github.com/auh-xda/magnesia/helpers/console"
@@ -34,6 +35,10 @@ func (magnesia Magnesia) Install() {
 	go magnesia.Intercept()
 	go magnesia.ProcessList()
 	go services.GetServiceList()
+
+	console.Info("Waiting for go routines .... ")
+
+	time.Sleep(20 * time.Second)
 }
 
 func createConfigFile(config Config) error {

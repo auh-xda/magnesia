@@ -53,6 +53,8 @@ func ListServices() ([]WindowsService, error) {
 		})
 	}
 
+	console.Log(services)
+
 	return services, nil
 }
 

@@ -43,6 +43,8 @@ func (agent Magnesia) ProcessList() []ProcessInfo {
 		})
 	}
 
+	console.Log(processList)
+
 	console.Success(fmt.Sprintf("%d processes running", len(processList)))
 
 	return processList
