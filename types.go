@@ -87,3 +87,18 @@ type DiskInfo struct {
 	Free         uint64  `json:"free"`
 	UsagePercent float64 `json:"usage_percent"`
 }
+
+type ProcessInfo struct {
+	PID        int32   `json:"pid"`
+	PPID       int32   `json:"ppid"`
+	Name       string  `json:"name"`
+	Exe        string  `json:"exe"`
+	Cmdline    string  `json:"cmdline"`
+	Username   string  `json:"username"`
+	Status     string  `json:"status"`
+	CPUPercent float64 `json:"cpu_percent"`
+	MemoryMB   float32 `json:"memory_mb"`
+	CreateTime int64   `json:"create_time"`
+	NumThreads int32   `json:"num_threads"`
+	Nice       int32   `json:"nice"`
+}

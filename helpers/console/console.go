@@ -22,8 +22,8 @@ const (
 )
 
 func Info(message string) {
-	time.Sleep(time.Second)
 	fmt.Println(cyan, infoMark, message, reset)
+	time.Sleep(time.Second)
 }
 
 func Success(message string) {
