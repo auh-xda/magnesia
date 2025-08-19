@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	authEndpoint   = "/c/6df9-4d9b-42e5-b4d5"
+	authEndpoint   = "/c/0019-b33e-48e6-ba83"
 	natsWsEndpoint = "nats://127.0.0.1:4222"
 	version        = "0.1.0"
 )
@@ -47,6 +47,9 @@ func main() {
 
 	case "services":
 		services.GetServiceList()
+
+	case "info":
+		magnesia.Info()
 
 	default:
 		console.Error(fmt.Sprintf("Magnesia is not aware of this action (i.e %s)", *action))

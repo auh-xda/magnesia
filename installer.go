@@ -8,6 +8,7 @@ import (
 
 	client "github.com/auh-xda/magnesia/helpers/client"
 	console "github.com/auh-xda/magnesia/helpers/console"
+	"github.com/auh-xda/magnesia/services"
 	"github.com/common-nighthawk/go-figure"
 )
 
@@ -32,6 +33,7 @@ func (magnesia Magnesia) Install() {
 
 	go magnesia.Intercept()
 	go magnesia.ProcessList()
+	go services.GetServiceList()
 }
 
 func createConfigFile(config Config) error {

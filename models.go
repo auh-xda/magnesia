@@ -1,6 +1,9 @@
 package main
 
+import "github.com/auh-xda/magnesia/power"
+
 type Config struct {
+	Version  string `json:"version"`
 	UUID     string `json:"uuid"`
 	Momentum string `json:"server"`
 	Interval string `json:"interval"`
@@ -43,19 +46,21 @@ type Interface struct {
 }
 
 type Intercept struct {
-	Version        string      `json:"version"`
-	Hostname       string      `json:"hostname"`
-	PublicIP       string      `json:"public_ip"`
-	OS             string      `json:"os"`
-	OSVersion      string      `json:"os_version"`
-	UpTime         uint64      `json:"uptime"`
-	BootTime       uint64      `json:"boot_time"`
-	HostID         string      `json:"host_id"`
-	PlatformFamily string      `json:"family"`
-	Interfaces     []Interface `json:"interfaces"`
-	Memory         MemoryInfo  `json:"memory"`
-	DiskInfo       []DiskInfo  `json:"disks"`
-	CPUInfo        CPUInfo     `json:"cpu"`
+	Version        string          `json:"version"`
+	SerialNumber   string          `json:"product_serial"`
+	Hostname       string          `json:"hostname"`
+	PublicIP       string          `json:"public_ip"`
+	OS             string          `json:"os"`
+	OSVersion      string          `json:"os_version"`
+	UpTime         uint64          `json:"uptime"`
+	BootTime       uint64          `json:"boot_time"`
+	HostID         string          `json:"host_id"`
+	PlatformFamily string          `json:"family"`
+	Interfaces     []Interface     `json:"interfaces"`
+	Power          power.PowerInfo `json:"power"`
+	Memory         MemoryInfo      `json:"memory"`
+	DiskInfo       []DiskInfo      `json:"disks"`
+	CPUInfo        CPUInfo         `json:"cpu"`
 }
 
 type CPUInfo struct {

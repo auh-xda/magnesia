@@ -1,13 +1,16 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"net"
 	"os/exec"
+	"runtime"
 	"strings"
 	"time"
 
 	console "github.com/auh-xda/magnesia/helpers/console"
+	"github.com/auh-xda/magnesia/power"
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/disk"
 	"github.com/shirou/gopsutil/v3/host"
@@ -22,6 +25,7 @@ func (magnesia Magnesia) Intercept() {
 	intercept := Intercept{}
 
 	intercept.Version = version
+	intercept.SerialNumber = getProductSerial()
 
 	publicIP, err := exec.Command("curl", "-s", "https://ifconfig.me").Output()
 	if err == nil {
@@ -40,15 +44,65 @@ func (magnesia Magnesia) Intercept() {
 		intercept.HostID = info.HostID
 	}
 
+	intercept.Power = power.GetInfo()
 	intercept.Interfaces = getDeviceInterfaces()
 	intercept.Memory = getMemoryInfo()
 	intercept.DiskInfo = getDiskInfo()
 	intercept.CPUInfo = getCPUInfo()
 
+	console.Log(intercept)
+
 	time := time.Since(start).Seconds()
 	console.Success(fmt.Sprintf("Information pulled up in %0.2f s", time))
 
 	Websocket{MagnesiaPayload: intercept}.SendData()
+}
+
+func getProductSerial() string {
+	switch runtime.GOOS {
+	case "windows":
+		out, err := exec.Command("wmic", "bios", "get", "serialnumber").Output()
+		if err != nil {
+			return "--"
+		}
+		lines := strings.Split(string(out), "\n")
+		if len(lines) > 1 {
+			return strings.TrimSpace(lines[1])
+		}
+		return "--"
+
+	case "linux":
+		// Try reading from DMI
+		out, err := exec.Command("cat", "/sys/class/dmi/id/product_serial").Output()
+		if err == nil {
+			return strings.TrimSpace(string(out))
+		}
+		// Fallback to dmidecode
+		out, err = exec.Command("dmidecode", "-s", "system-serial-number").Output()
+		if err == nil {
+			return strings.TrimSpace(string(out))
+		}
+		return "--"
+
+	case "darwin":
+		out, err := exec.Command("system_profiler", "SPHardwareDataType").Output()
+		if err != nil {
+			return "--"
+		}
+		lines := bytes.Split(out, []byte("\n"))
+		for _, l := range lines {
+			line := strings.TrimSpace(string(l))
+			if strings.HasPrefix(line, "Serial Number") {
+				parts := strings.Split(line, ":")
+				if len(parts) == 2 {
+					return strings.TrimSpace(parts[1])
+				}
+			}
+		}
+		return "--"
+	}
+
+	return "--"
 }
 
 func getCPUInfo() CPUInfo {

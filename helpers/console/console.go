@@ -6,7 +6,6 @@ import (
 	"os"
 	"reflect"
 	"strings"
-	"time"
 )
 
 const (
@@ -23,7 +22,6 @@ const (
 
 func Info(message string) {
 	fmt.Println(cyan, infoMark, message, reset)
-	time.Sleep(time.Second)
 }
 
 func Success(message string) {

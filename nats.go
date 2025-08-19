@@ -12,11 +12,6 @@ func (ws Websocket) SendData() {
 	return
 	console.Info("Establishing Connection with ws server")
 	config, err := Config{}.Parse()
-
-	if err != nil {
-		console.Error("Unable to parse the config")
-	}
-
 	ws.MagnesiaUid = config.UUID
 	ws.MagnesiaChannel = config.Channel
 	ws.MagnesiaSiteId = config.ClientID
