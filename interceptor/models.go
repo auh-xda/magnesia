@@ -1,22 +1,16 @@
-// *******************************************************************
-// *     __  __                                        _             *
-// *    |  \/  |   __ _    __ _   _ __     ___   ___  (_)   __ _     *
-// *    | |\/| |  / _` |  / _` | | '_ \   / _ \ / __| | |  / _` |    *
-// *    | |  | | | (_| | | (_| | | | | | |  __/ \__ \ | | | (_| |    *
-// *    |_|  |_|  \__,_|  \__, | |_| |_|  \___| |___/ |_|  \__,_|    *
-// *                      |___/                                      *
-// *******************************************************************
-
 package interceptor
 
-type BatteryStatus struct {
-	Charging          bool
-	Discharging       bool
-	PowerOnline       bool
-	RemainingCapacity uint32
-	ChargeRate        int32
-	DischargeRate     int32
-	Voltage           uint32
+type CPUInfo struct {
+	Manufacturer      string    `json:"manufacturer"`
+	SpeedMHz          float64   `json:"cpu_speed_mhz"`
+	TotalCores        int       `json:"cores"`
+	Model             string    `json:"model"`
+	Sockets           int       `json:"sockets"`
+	CoresPerSocket    int       `json:"cores_per_socket"`
+	LogicalProcessors int       `json:"logical_processors"`
+	Hyperthread       bool      `json:"hyperthread"`
+	UsagePerCore      []float64 `json:"usage_per_core"`
+	OverallUsage      float64   `json:"overall_usage"`
 }
 
 type LinuxService struct {
@@ -32,6 +26,10 @@ type WindowsService struct {
 	StartType   string `json:"start_type"`
 }
 
+type BatteryFullChargedCapacity struct {
+	FullChargedCapacity uint32
+}
+
 type DarwinService struct {
 	Label  string `json:"label"`
 	Status string `json:"status"`
@@ -39,17 +37,16 @@ type DarwinService struct {
 }
 
 type PowerInfo struct {
-	Vendor   string `json:"vendor"`
-	Model    string `json:"model"`
-	Serial   string `json:"serial"`
+	Vendor   string `json:"vendor,omitempty"`
+	Model    string `json:"model,omitempty"`
+	Serial   string `json:"serial,omitempty"`
 	Status   string `json:"status"`
 	Capacity string `json:"capacity"`
 }
 
-type WinBattery struct {
-	Name                     string
-	Manufacturer             string
-	SerialNumber             string
-	BatteryStatus            uint16
-	EstimatedChargeRemaining uint16
+type BatteryStatus struct {
+	Charging          bool
+	Discharging       bool
+	PowerOnline       bool
+	RemainingCapacity uint32
 }

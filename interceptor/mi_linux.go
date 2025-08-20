@@ -7,6 +7,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 
@@ -75,4 +76,53 @@ func readFile(path string) string {
 		return "N/A"
 	}
 	return strings.TrimSpace(string(data))
+}
+
+func GetCPUInfo() CPUInfo {
+	listOfCpus, err := cpu.Info()
+	if err != nil || len(listOfCpus) == 0 {
+		return CPUInfo{}
+	}
+
+	uniqueCores := make(map[string]struct{})
+	uniqueSockets := make(map[string]struct{})
+
+	for _, c := range listOfCpus {
+		uniqueCores[c.CoreID] = struct{}{}
+		uniqueSockets[c.PhysicalID] = struct{}{}
+	}
+
+	totalCores := len(uniqueCores)
+	totalSockets := len(uniqueSockets)
+	if totalSockets == 0 {
+		totalSockets = 1 // avoid divide by zero
+	}
+	coresPerSocket := totalCores / totalSockets
+
+	logicalProcs := len(listOfCpus)
+
+	// CPU usage percentages
+	usagePercents, _ := cpu.Percent(1*time.Second, false)        // overall
+	usagePercentsCoreWise, _ := cpu.Percent(1*time.Second, true) // per core
+
+	overallUsage := 0.0
+
+	if len(usagePercents) > 0 {
+		overallUsage = usagePercents[0]
+	}
+
+	cpuInfo := CPUInfo{
+		Manufacturer:      listOfCpus[0].VendorID,
+		Model:             listOfCpus[0].ModelName,
+		SpeedMHz:          listOfCpus[0].Mhz,
+		TotalCores:        totalCores,
+		Sockets:           totalSockets,
+		CoresPerSocket:    coresPerSocket,
+		LogicalProcessors: logicalProcs,
+		Hyperthread:       logicalProcs > totalCores,
+		UsagePerCore:      usagePercentsCoreWise,
+		OverallUsage:      overallUsage,
+	}
+
+	return cpuInfo
 }

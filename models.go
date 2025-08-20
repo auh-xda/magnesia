@@ -62,20 +62,7 @@ type Intercept struct {
 	Power          interceptor.PowerInfo `json:"power"`
 	Memory         MemoryInfo            `json:"memory"`
 	DiskInfo       []DiskInfo            `json:"disks"`
-	CPUInfo        CPUInfo               `json:"cpu"`
-}
-
-type CPUInfo struct {
-	Manufacturer      string    `json:"manufacturer"`
-	SpeedMHz          float64   `json:"cpu_speed_mhz"`
-	TotalCores        int       `json:"cores"`
-	Model             string    `json:"model"`
-	Sockets           int       `json:"sockets"`
-	CoresPerSocket    int       `json:"cores_per_socket"`
-	LogicalProcessors int       `json:"logical_processors"`
-	Hyperthread       bool      `json:"hyperthread"`
-	UsagePerCore      []float64 `json:"usage_per_core"`
-	OverallUsage      float64   `json:"overall_usage"`
+	CPUInfo        interceptor.CPUInfo   `json:"cpu"`
 }
 
 type MemoryInfo struct {
