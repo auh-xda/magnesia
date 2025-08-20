@@ -19,31 +19,50 @@ func (agent Magnesia) ProcessList() []ProcessInfo {
 		exe, _ := p.Exe()
 		cmdline, _ := p.Cmdline()
 		username, _ := p.Username()
-		status, _ := p.Status()
-		ppid, _ := p.Ppid()
+
+		var statusRes string
+		status, e := p.Status()
+		if e != nil || len(status) == 0 {
+			statusRes = "unknown"
+		} else {
+			statusRes = status[0]
+		}
+
 		createTime, _ := p.CreateTime()
 		cpuPercent, _ := p.CPUPercent()
-		memInfo, _ := p.MemoryInfo()
-		numThreads, _ := p.NumThreads()
-		nice, _ := p.Nice()
+		mem, e := p.MemoryInfo()
 
-		processList = append(processList, ProcessInfo{
+		var memInfo float32
+
+		if e != nil {
+			memInfo = 0.0
+		} else {
+			memInfo = float32(mem.RSS) / 1024 / 1024
+		}
+		numThreads, e := p.NumThreads()
+		nice, e := p.Nice()
+		ppid, _ := p.Ppid()
+
+		pInfo := ProcessInfo{
 			PID:        p.Pid,
 			PPID:       ppid,
 			Name:       name,
 			Exe:        exe,
 			Cmdline:    cmdline,
 			Username:   username,
-			Status:     status[0],
+			Status:     statusRes,
 			CPUPercent: cpuPercent,
-			MemoryMB:   float32(memInfo.RSS) / 1024 / 1024,
+			MemoryMB:   memInfo,
 			CreateTime: createTime,
 			NumThreads: numThreads,
 			Nice:       nice,
-		})
-	}
+		}
 
-	console.Log(processList)
+		console.Log(pInfo)
+
+		processList = append(processList, pInfo)
+
+	}
 
 	console.Success(fmt.Sprintf("%d processes running", len(processList)))
 

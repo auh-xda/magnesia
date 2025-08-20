@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"runtime"
 	"strings"
+	"syscall"
+	"unsafe"
 )
 
 const (
@@ -19,6 +22,28 @@ const (
 	crossMark = "✖"
 	infoMark  = "➤"
 )
+
+// init runs when the package is imported
+func init() {
+	if runtime.GOOS == "windows" {
+		enableVirtualTerminal()
+	}
+}
+
+// enableVirtualTerminal enables ANSI color support on Windows 10+
+func enableVirtualTerminal() {
+	kernel32 := syscall.NewLazyDLL("kernel32.dll")
+	setConsoleMode := kernel32.NewProc("SetConsoleMode")
+	getConsoleMode := kernel32.NewProc("GetConsoleMode")
+
+	handle := syscall.Handle(os.Stdout.Fd())
+	var mode uint32
+	getConsoleMode.Call(uintptr(handle), uintptr(unsafe.Pointer(&mode)))
+
+	// ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x0004
+	const ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x0004
+	setConsoleMode.Call(uintptr(handle), uintptr(mode|ENABLE_VIRTUAL_TERMINAL_PROCESSING))
+}
 
 func Info(message string) {
 	fmt.Println(cyan, infoMark, message, reset)
@@ -102,7 +127,7 @@ func Table(data interface{}) {
 	fmt.Printf("└%s┴%s┘\n", strings.Repeat("─", maxFieldLen+2), strings.Repeat("─", maxValLen+2))
 }
 
-// View prints v to stdout as pretty JSON (print_r-like).
+// Log prints v to stdout as pretty JSON (print_r-like).
 // Falls back to a %#v dump if JSON marshaling fails.
 func Log(v any) {
 	// Try JSON pretty print

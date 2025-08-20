@@ -9,28 +9,41 @@ import (
 	"github.com/StackExchange/wmi"
 )
 
+type BatteryStatus struct {
+	Charging          bool
+	Discharging       bool
+	PowerOnline       bool
+	RemainingCapacity uint32
+	ChargeRate        int32
+	DischargeRate     int32
+	Voltage           uint32
+}
+
 func GetInfo() PowerInfo {
-	var dst []WinBattery
-	err := wmi.Query("SELECT * FROM Win32_Battery", &dst)
-	if err != nil || len(dst) == 0 {
-		return PowerInfo{}
+	var statuses []BatteryStatus
+	// Query from root\wmi namespace
+	q := wmi.CreateQuery(&statuses, "")
+	err := wmi.QueryNamespace(q, &statuses, "root\\wmi")
+	if err != nil || len(statuses) == 0 {
+		return PowerInfo{Status: "No Battery Detected"}
 	}
-	b := dst[0]
+
+	b := statuses[0]
+
 	status := "Unknown"
-	switch b.BatteryStatus {
-	case 1:
-		status = "Discharging"
-	case 2:
+	if b.Charging {
 		status = "Charging"
-	case 3:
-		status = "Fully Charged"
+	} else if b.Discharging {
+		status = "Discharging"
+	} else if b.PowerOnline {
+		status = "On AC Power"
 	}
 
 	return PowerInfo{
-		Vendor:   b.Manufacturer,
-		Model:    b.Name,
-		Serial:   b.SerialNumber,
+		Vendor:   "", // Not in BatteryStatus
+		Model:    "", // Not in BatteryStatus
+		Serial:   "", // Not in BatteryStatus
 		Status:   status,
-		Capacity: fmt.Sprintf("%d%%", b.EstimatedChargeRemaining),
+		Capacity: fmt.Sprintf("%d%%", b.RemainingCapacity),
 	}
 }
