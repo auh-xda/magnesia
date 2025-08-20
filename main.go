@@ -64,6 +64,9 @@ func main() {
 	case "info":
 		magnesia.Info()
 
+	case "software":
+		interceptor.InstalledSoftwareList()
+
 	default:
 		console.Error(fmt.Sprintf("Magnesia is not aware of this action (i.e %s)", *action))
 	}

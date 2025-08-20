@@ -166,3 +166,7 @@ func GetCPUInfo() (CPUInfo, err) {
 
 	return cpuInfo, nil
 }
+
+func Installations() {
+	return make(map[string]InstalledSoftware)
+}

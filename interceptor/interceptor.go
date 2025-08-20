@@ -34,3 +34,16 @@ func GetCpuDetails() CPUInfo {
 
 	return info
 }
+
+func InstalledSoftwareList() {
+
+	sw, err := Installations()
+
+	if err != nil {
+		console.Error("failed to query installed software list")
+	}
+
+	console.Log(sw)
+
+	console.Success(fmt.Sprintf("%d softwares are there ", len(sw)))
+}

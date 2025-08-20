@@ -10,6 +10,7 @@ import (
 	"github.com/StackExchange/wmi"
 	"github.com/auh-xda/magnesia/console"
 	"github.com/shirou/gopsutil/v3/cpu"
+	"golang.org/x/sys/windows/registry"
 	"golang.org/x/sys/windows/svc/mgr"
 )
 
@@ -201,4 +202,95 @@ func GetCPUInfo() (CPUInfo, error) {
 	}
 
 	return info, nil
+}
+
+func Installations() ([]InstalledSoftware, error) {
+	roots := []registry.Key{
+		registry.LOCAL_MACHINE,
+	}
+	paths := []string{
+		`SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall`,
+		`SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall`,
+	}
+
+	var software []InstalledSoftware
+
+	for _, root := range roots {
+		for _, path := range paths {
+			k, err := registry.OpenKey(root, path, registry.READ)
+			if err != nil {
+				continue
+			}
+
+			defer k.Close()
+
+			names, _ := k.ReadSubKeyNames(-1)
+			for _, name := range names {
+				subk, err := registry.OpenKey(k, name, registry.READ)
+				if err != nil {
+					continue
+				}
+				defer subk.Close()
+
+				displayName, _, _ := subk.GetStringValue("DisplayName")
+				if displayName == "" {
+					continue
+				}
+
+				displayVersion, _, _ := subk.GetStringValue("DisplayVersion")
+				publisher, _, _ := subk.GetStringValue("Publisher")
+				installDate, _, _ := subk.GetStringValue("InstallDate")
+				installLocation, _, _ := subk.GetStringValue("InstallLocation")
+				uninstallString, _, _ := subk.GetStringValue("UninstallString")
+				quietUninstall, _, _ := subk.GetStringValue("QuietUninstallString")
+				iconPath, _, _ := subk.GetStringValue("DisplayIcon")
+				helpLink, _, _ := subk.GetStringValue("HelpLink")
+				infoURL, _, _ := subk.GetStringValue("URLInfoAbout")
+				installSource, _, _ := subk.GetStringValue("InstallSource")
+
+				size, _, _ := subk.GetIntegerValue("EstimatedSize") // in KB
+
+				software = append(software, InstalledSoftware{
+					Name:            displayName,
+					Version:         displayVersion,
+					Vendor:          publisher,
+					InstallDate:     installDate,
+					InstallLocation: installLocation,
+					UninstallString: uninstallString,
+					QuietUninstall:  quietUninstall,
+					EstimatedSize:   formatSizeKB(size),
+					IconPath:        iconPath,
+					HelpLink:        helpLink,
+					InfoURL:         infoURL,
+					InstallSource:   installSource,
+				})
+
+				software = append(software, InstalledSoftware{
+					Name:        displayName,
+					Version:     displayVersion,
+					Vendor:      publisher,
+					InstallDate: installDate,
+				})
+			}
+		}
+	}
+	return software, nil
+}
+
+func formatSizeKB(sizeKB uint64) string {
+	if sizeKB == 0 {
+		return ""
+	}
+
+	if sizeKB < 1024 {
+		return fmt.Sprintf("%d KB", sizeKB)
+	}
+
+	sizeMB := float64(sizeKB) / 1024
+	if sizeMB < 1024 {
+		return fmt.Sprintf("%.1f MB", sizeMB)
+	}
+
+	sizeGB := sizeMB / 1024
+	return fmt.Sprintf("%.1f GB", sizeGB)
 }

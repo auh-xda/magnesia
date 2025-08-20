@@ -66,3 +66,18 @@ type win32Battery struct {
 	EstimatedChargeRemaining *uint16
 	BatteryStatus            *uint16
 }
+
+type InstalledSoftware struct {
+	Name            string `json:"name"`
+	Version         string `json:"version,omitempty"`
+	Vendor          string `json:"vendor,omitempty"`
+	InstallDate     string `json:"install_date,omitempty"`
+	InstallLocation string `json:"install_location,omitempty"`
+	UninstallString string `json:"uninstall_string,omitempty"`
+	QuietUninstall  string `json:"quiet_uninstall,omitempty"`
+	EstimatedSize   string `json:"estimated_size,omitempty"`
+	IconPath        string `json:"icon_path,omitempty"`
+	HelpLink        string `json:"help_link,omitempty"`
+	InfoURL         string `json:"info_url,omitempty"`
+	InstallSource   string `json:"install_source,omitempty"`
+}
