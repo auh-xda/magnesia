@@ -5,10 +5,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
-	"runtime"
 	"strings"
-	"syscall"
-	"unsafe"
 )
 
 const (
@@ -23,26 +20,8 @@ const (
 	infoMark  = "➤"
 )
 
-// init runs when the package is imported
 func init() {
-	if runtime.GOOS == "windows" {
-		enableVirtualTerminal()
-	}
-}
-
-// enableVirtualTerminal enables ANSI color support on Windows 10+
-func enableVirtualTerminal() {
-	kernel32 := syscall.NewLazyDLL("kernel32.dll")
-	setConsoleMode := kernel32.NewProc("SetConsoleMode")
-	getConsoleMode := kernel32.NewProc("GetConsoleMode")
-
-	handle := syscall.Handle(os.Stdout.Fd())
-	var mode uint32
-	getConsoleMode.Call(uintptr(handle), uintptr(unsafe.Pointer(&mode)))
-
-	// ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x0004
-	const ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x0004
-	setConsoleMode.Call(uintptr(handle), uintptr(mode|ENABLE_VIRTUAL_TERMINAL_PROCESSING))
+	EnableVirtualTerminal()
 }
 
 func Info(message string) {
