@@ -60,7 +60,7 @@ func ListServices() ([]LinuxService, error) {
 	return services, nil
 }
 
-func GetInfo() PowerInfo {
+func GetPowerInfo() PowerInfo {
 	return PowerInfo{
 		Vendor:   readFile("/sys/class/power_supply/BAT0/manufacturer"),
 		Model:    readFile("/sys/class/power_supply/BAT0/model_name"),
@@ -78,10 +78,10 @@ func readFile(path string) string {
 	return strings.TrimSpace(string(data))
 }
 
-func GetCPUInfo() CPUInfo {
+func GetCPUInfo() (CPUInfo, err) {
 	listOfCpus, err := cpu.Info()
 	if err != nil || len(listOfCpus) == 0 {
-		return CPUInfo{}
+		return CPUInfo{}, err
 	}
 
 	uniqueCores := make(map[string]struct{})
@@ -124,5 +124,5 @@ func GetCPUInfo() CPUInfo {
 		OverallUsage:      overallUsage,
 	}
 
-	return cpuInfo
+	return cpuInfo, nil
 }

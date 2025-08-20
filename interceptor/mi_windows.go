@@ -74,86 +74,131 @@ func startTypeToString(t uint32) string {
 	}
 }
 
-func GetInfo() PowerInfo {
-	var statuses []BatteryStatus
-	_ = wmi.QueryNamespace(wmi.CreateQuery(&statuses, ""), &statuses, "root\\wmi")
+func GetPowerInfo() (PowerInfo, error) {
+	var batteries []win32Battery
 
-	var fullCaps []BatteryFullChargedCapacity
-	_ = wmi.QueryNamespace(wmi.CreateQuery(&fullCaps, ""), &fullCaps, "root\\wmi")
+	// Query only universally safe fields
+	err := wmi.Query("SELECT Name, DeviceID, EstimatedChargeRemaining, BatteryStatus FROM Win32_Battery", &batteries)
+	if err != nil {
+		return PowerInfo{}, fmt.Errorf("failed to query battery info: %v", err)
+	}
 
-	percent := 0
+	if len(batteries) == 0 {
+		return PowerInfo{}, nil
+	}
+
+	b := batteries[0]
+
 	status := "Unknown"
+	capacity := "Unknown"
 
-	if len(statuses) > 0 {
-		b := statuses[0]
-
-		// Calculate percentage safely
-		if len(fullCaps) > 0 && fullCaps[0].FullChargedCapacity > 0 {
-			percent = int((float64(b.RemainingCapacity) / float64(fullCaps[0].FullChargedCapacity)) * 100)
-		}
-
-		if b.Charging {
-			status = "Charging"
-		} else if b.Discharging {
-			status = "Discharging"
-		} else if b.PowerOnline {
-			status = "On AC Power"
-		}
+	if b.BatteryStatus != nil {
+		status = batteryStatusText(*b.BatteryStatus)
+	}
+	if b.EstimatedChargeRemaining != nil {
+		capacity = fmt.Sprintf("%d%%", *b.EstimatedChargeRemaining)
 	}
 
 	return PowerInfo{
+		Vendor:   "",
+		Model:    safeString(b.Name),
+		Serial:   safeString(b.DeviceID),
 		Status:   status,
-		Capacity: fmt.Sprintf("%d%%", percent),
+		Capacity: capacity,
+	}, nil
+}
+
+func safeString(s *string) string {
+	if s != nil {
+		return *s
+	}
+	return ""
+}
+
+func batteryStatusText(code uint16) string {
+	switch code {
+	case 1:
+		return "Discharging"
+	case 2:
+		return "AC (Charging)"
+	case 3:
+		return "Fully Charged"
+	case 4:
+		return "Low"
+	case 5:
+		return "Critical"
+	case 6:
+		return "Charging"
+	case 7:
+		return "Charging and High"
+	case 8:
+		return "Charging and Low"
+	case 9:
+		return "Charging and Critical"
+	case 10:
+		return "Undefined"
+	case 11:
+		return "Partially Charged"
+	default:
+		return "Unknown"
 	}
 }
 
-func GetCPUInfo() CPUInfo {
-	console.Info("Getting CPU info from windows")
-	listOfCpus, err := cpu.Info()
-	if err != nil || len(listOfCpus) == 0 {
-		return CPUInfo{}
+func GetCPUInfo() (CPUInfo, error) {
+	var win32CPUs []win32Processor
+	err := wmi.Query("SELECT Manufacturer, Name, NumberOfCores, NumberOfLogicalProcessors, MaxClockSpeed, SocketDesignation FROM Win32_Processor", &win32CPUs)
+
+	// CPU usage stats (works regardless of WMI success/failure)
+	usagePerCore, _ := cpu.Percent(time.Second, true)
+	overallUsage, _ := cpu.Percent(time.Second, false)
+
+	// If WMI failed → fallback to gopsutil basic info
+	if err != nil || len(win32CPUs) == 0 {
+		infoStats, errInfo := cpu.Info()
+		if errInfo != nil || len(infoStats) == 0 {
+			return CPUInfo{}, fmt.Errorf("failed to fetch CPU info via WMI and gopsutil")
+		}
+		ci := infoStats[0]
+		return CPUInfo{
+			Manufacturer:      "Unknown",
+			Model:             ci.ModelName,
+			SpeedMHz:          ci.Mhz,
+			TotalCores:        int(ci.Cores),
+			LogicalProcessors: int(len(infoStats)), // gopsutil reports logical CPUs
+			Sockets:           1,
+			CoresPerSocket:    int(ci.Cores),
+			Hyperthread:       len(infoStats) > int(ci.Cores),
+			UsagePerCore:      usagePerCore,
+			OverallUsage:      overallUsage[0],
+		}, nil
 	}
 
-	uniqueCores := make(map[string]struct{})
-	uniqueSockets := make(map[string]struct{})
+	// Aggregate multi-socket results
+	totalCores := 0
+	totalLogical := 0
+	sockets := len(win32CPUs)
+	manufacturer := win32CPUs[0].Manufacturer
+	model := win32CPUs[0].Name
+	speed := win32CPUs[0].MaxClockSpeed
+	coresPerSocket := int(win32CPUs[0].NumberOfCores)
 
-	for _, c := range listOfCpus {
-		uniqueCores[c.CoreID] = struct{}{}
-		uniqueSockets[c.PhysicalID] = struct{}{}
+	for _, c := range win32CPUs {
+		totalCores += int(c.NumberOfCores)
+		totalLogical += int(c.NumberOfLogicalProcessors)
 	}
 
-	totalCores := len(uniqueCores)
-	totalSockets := len(uniqueSockets)
-	if totalSockets == 0 {
-		totalSockets = 1 // avoid divide by zero
-	}
-	coresPerSocket := totalCores / totalSockets
-
-	logicalProcs := len(listOfCpus)
-
-	// CPU usage percentages
-	usagePercents, _ := cpu.Percent(1*time.Second, false)        // overall
-	usagePercentsCoreWise, _ := cpu.Percent(1*time.Second, true) // per core
-
-	overallUsage := 0.0
-
-	if len(usagePercents) > 0 {
-		overallUsage = usagePercents[0]
-	}
-
-	cpuInfo := CPUInfo{
-		Manufacturer:      listOfCpus[0].VendorID,
-		Model:             listOfCpus[0].ModelName,
-		SpeedMHz:          listOfCpus[0].Mhz,
+	info := CPUInfo{
+		Manufacturer:      manufacturer,
+		Model:             model,
+		SpeedMHz:          float64(speed),
 		TotalCores:        totalCores,
-		Sockets:           totalSockets,
+		LogicalProcessors: totalLogical,
+		Sockets:           sockets,
 		CoresPerSocket:    coresPerSocket,
-		LogicalProcessors: logicalProcs,
-		Hyperthread:       logicalProcs > totalCores,
-		UsagePerCore:      usagePercentsCoreWise,
-		OverallUsage:      overallUsage,
+		Hyperthread:       totalLogical > totalCores,
+		UsagePerCore:      usagePerCore,
+		OverallUsage:      overallUsage[0],
 	}
 
-	return cpuInfo
-
+	return info, nil
 }

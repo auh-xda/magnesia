@@ -19,7 +19,18 @@ func GetServices() {
 
 func BatteryInfo() PowerInfo {
 
-	powerInfo := GetInfo()
+	powerInfo, _ := GetPowerInfo()
 
 	return powerInfo
+}
+
+func GetCpuDetails() CPUInfo {
+
+	info, err := GetCPUInfo()
+
+	if err != nil {
+		console.Error(err.Error())
+	}
+
+	return info
 }

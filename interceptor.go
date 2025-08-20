@@ -48,7 +48,7 @@ func (magnesia Magnesia) Intercept() {
 	intercept.Interfaces = getDeviceInterfaces()
 	intercept.Memory = getMemoryInfo()
 	intercept.DiskInfo = getDiskInfo()
-	intercept.CPUInfo = interceptor.GetCPUInfo()
+	intercept.CPUInfo = interceptor.GetCpuDetails()
 
 	console.Log(intercept)
 

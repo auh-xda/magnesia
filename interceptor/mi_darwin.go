@@ -59,7 +59,7 @@ func ListServices() ([]DarwinService, error) {
 	return services, nil
 }
 
-func GetInfo() PowerInfo {
+func GetPowerInfo() PowerInfo {
 	pi := PowerInfo{}
 	out, err := exec.Command("ioreg", "-rc", "AppleSmartBattery").Output()
 	if err != nil {
@@ -118,10 +118,10 @@ func getDarwinMaxCapacity(lines []string) int {
 	return 0
 }
 
-func GetCPUInfo() CPUInfo {
+func GetCPUInfo() (CPUInfo, err) {
 	listOfCpus, err := cpu.Info()
 	if err != nil || len(listOfCpus) == 0 {
-		return CPUInfo{}
+		return CPUInfo{}, err
 	}
 
 	uniqueCores := make(map[string]struct{})
@@ -164,5 +164,5 @@ func GetCPUInfo() CPUInfo {
 		OverallUsage:      overallUsage,
 	}
 
-	return cpuInfo
+	return cpuInfo, nil
 }

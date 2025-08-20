@@ -50,3 +50,19 @@ type BatteryStatus struct {
 	PowerOnline       bool
 	RemainingCapacity uint32
 }
+
+type win32Processor struct {
+	Manufacturer              string
+	Name                      string
+	NumberOfCores             uint32
+	NumberOfLogicalProcessors uint32
+	MaxClockSpeed             uint32
+	SocketDesignation         string
+}
+
+type win32Battery struct {
+	Name                     *string
+	DeviceID                 *string
+	EstimatedChargeRemaining *uint16
+	BatteryStatus            *uint16
+}
