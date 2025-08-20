@@ -1,7 +1,7 @@
 //go:build linux
 // +build linux
 
-package services
+package interceptor
 
 import (
 	"bufio"
@@ -10,7 +10,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/auh-xda/magnesia/helpers/console"
+	"github.com/auh-xda/magnesia/console"
 )
 
 func ListServices() ([]LinuxService, error) {
@@ -57,4 +57,22 @@ func ListServices() ([]LinuxService, error) {
 	}
 
 	return services, nil
+}
+
+func GetInfo() PowerInfo {
+	return PowerInfo{
+		Vendor:   readFile("/sys/class/power_supply/BAT0/manufacturer"),
+		Model:    readFile("/sys/class/power_supply/BAT0/model_name"),
+		Serial:   readFile("/sys/class/power_supply/BAT0/serial_number"),
+		Status:   readFile("/sys/class/power_supply/BAT0/status"),
+		Capacity: readFile("/sys/class/power_supply/BAT0/capacity"),
+	}
+}
+
+func readFile(path string) string {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return "N/A"
+	}
+	return strings.TrimSpace(string(data))
 }

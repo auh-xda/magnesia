@@ -4,8 +4,8 @@ import (
 	"flag"
 	"fmt"
 
-	console "github.com/auh-xda/magnesia/helpers/console"
-	"github.com/auh-xda/magnesia/services"
+	"github.com/auh-xda/magnesia/console"
+	"github.com/auh-xda/magnesia/interceptor"
 )
 
 const (
@@ -46,7 +46,10 @@ func main() {
 		magnesia.ProcessList()
 
 	case "services":
-		services.GetServiceList()
+		interceptor.GetServices()
+
+	case "power":
+		interceptor.BatteryInfo()
 
 	case "info":
 		magnesia.Info()

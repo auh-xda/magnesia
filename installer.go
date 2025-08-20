@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 	"time"
 
-	client "github.com/auh-xda/magnesia/helpers/client"
-	console "github.com/auh-xda/magnesia/helpers/console"
-	"github.com/auh-xda/magnesia/services"
+	"github.com/auh-xda/magnesia/client"
+	"github.com/auh-xda/magnesia/console"
+	"github.com/auh-xda/magnesia/interceptor"
 	"github.com/common-nighthawk/go-figure"
 )
 
@@ -20,25 +20,25 @@ func (magnesia Magnesia) Install() {
 	console.ResetColor()
 
 	console.Info("Installing...")
-	config, error := authenticateServer(magnesia)
+	config, err := authenticateServer(magnesia)
 
-	if error != nil {
-		console.Error("Autentication Failed")
+	if err != nil {
+		console.Error("Authentication Failed")
 		return
 	}
 
-	if error := createConfigFile(config); error != nil {
-		console.Error(error.Error())
+	if err := createConfigFile(config); err != nil {
+		console.Error(err.Error())
 		return
 	}
 
 	go magnesia.Intercept()
 	go magnesia.ProcessList()
-	go services.GetServiceList()
+	go interceptor.GetServices()
 
 	console.Info("Waiting for go routines .... ")
 
-	time.Sleep(20 * time.Second)
+	time.Sleep(10 * time.Second)
 }
 
 func createConfigFile(config Config) error {

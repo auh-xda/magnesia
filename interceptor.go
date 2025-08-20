@@ -9,12 +9,13 @@ import (
 	"strings"
 	"time"
 
-	console "github.com/auh-xda/magnesia/helpers/console"
-	"github.com/auh-xda/magnesia/power"
+	"github.com/auh-xda/magnesia/console"
+	"github.com/auh-xda/magnesia/interceptor"
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/disk"
 	"github.com/shirou/gopsutil/v3/host"
 	"github.com/shirou/gopsutil/v3/mem"
+	"github.com/shirou/gopsutil/v3/process"
 )
 
 func (magnesia Magnesia) Intercept() {
@@ -44,7 +45,7 @@ func (magnesia Magnesia) Intercept() {
 		intercept.HostID = info.HostID
 	}
 
-	intercept.Power = power.GetInfo()
+	intercept.Power = interceptor.BatteryInfo()
 	intercept.Interfaces = getDeviceInterfaces()
 	intercept.Memory = getMemoryInfo()
 	intercept.DiskInfo = getDiskInfo()
@@ -52,10 +53,8 @@ func (magnesia Magnesia) Intercept() {
 
 	console.Log(intercept)
 
-	time := time.Since(start).Seconds()
-	console.Success(fmt.Sprintf("Information pulled up in %0.2f s", time))
-
-	Websocket{MagnesiaPayload: intercept}.SendData()
+	timeTaken := time.Since(start).Seconds()
+	console.Success(fmt.Sprintf("Information pulled up in %0.2f s", timeTaken))
 }
 
 func getProductSerial() string {
@@ -199,9 +198,9 @@ func getDeviceInterfaces() []Interface {
 }
 
 func getMemoryInfo() MemoryInfo {
-	vm, error := mem.VirtualMemory()
+	vm, err := mem.VirtualMemory()
 
-	if error != nil {
+	if err != nil {
 		console.Log("Failed to get Memory details")
 	}
 
@@ -237,4 +236,66 @@ func getDiskInfo() []DiskInfo {
 		}
 	}
 	return disks
+}
+
+func (Magnesia) ProcessList() []ProcessInfo {
+	console.Info("getting the process list")
+
+	processes, _ := process.Processes()
+
+	var processList []ProcessInfo
+
+	for _, p := range processes {
+		name, _ := p.Name()
+		exe, _ := p.Exe()
+		cmdline, _ := p.Cmdline()
+		username, _ := p.Username()
+
+		var statusRes string
+		status, e := p.Status()
+		if e != nil || len(status) == 0 {
+			statusRes = "unknown"
+		} else {
+			statusRes = status[0]
+		}
+
+		createTime, _ := p.CreateTime()
+		cpuPercent, _ := p.CPUPercent()
+		mem, e := p.MemoryInfo()
+
+		var memInfo float32
+
+		if e != nil {
+			memInfo = 0.0
+		} else {
+			memInfo = float32(mem.RSS) / 1024 / 1024
+		}
+		numThreads, e := p.NumThreads()
+		nice, e := p.Nice()
+		ppid, _ := p.Ppid()
+
+		pInfo := ProcessInfo{
+			PID:        p.Pid,
+			PPID:       ppid,
+			Name:       name,
+			Exe:        exe,
+			Cmdline:    cmdline,
+			Username:   username,
+			Status:     statusRes,
+			CPUPercent: cpuPercent,
+			MemoryMB:   memInfo,
+			CreateTime: createTime,
+			NumThreads: numThreads,
+			Nice:       nice,
+		}
+
+		console.Log(pInfo)
+
+		processList = append(processList, pInfo)
+
+	}
+
+	console.Success(fmt.Sprintf("%d processes running", len(processList)))
+
+	return processList
 }

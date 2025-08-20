@@ -1,17 +1,18 @@
 package main
 
+import "C"
 import (
 	"encoding/json"
 	"fmt"
 
-	console "github.com/auh-xda/magnesia/helpers/console"
+	"github.com/auh-xda/magnesia/console"
 	"github.com/nats-io/nats.go"
 )
 
 func (ws Websocket) SendData() {
-	return
 	console.Info("Establishing Connection with ws server")
-	config, err := Config{}.Parse()
+	magnesia := Magnesia{}
+	config, err := magnesia.ParseConfig()
 	ws.MagnesiaUid = config.UUID
 	ws.MagnesiaChannel = config.Channel
 	ws.MagnesiaSiteId = config.ClientID

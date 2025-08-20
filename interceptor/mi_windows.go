@@ -1,12 +1,13 @@
 //go:build windows
 // +build windows
 
-package services
+package interceptor
 
 import (
 	"fmt"
 
-	"github.com/auh-xda/magnesia/helpers/console"
+	"github.com/StackExchange/wmi"
+	"github.com/auh-xda/magnesia/console"
 	"golang.org/x/sys/windows/svc/mgr"
 )
 
@@ -69,5 +70,34 @@ func startTypeToString(t uint32) string {
 		return "disabled"
 	default:
 		return "unknown"
+	}
+}
+
+func GetInfo() PowerInfo {
+	var statuses []BatteryStatus
+	// Query from root\wmi namespace
+	q := wmi.CreateQuery(&statuses, "")
+	err := wmi.QueryNamespace(q, &statuses, "root\\wmi")
+	if err != nil || len(statuses) == 0 {
+		return PowerInfo{Status: "No Battery Detected"}
+	}
+
+	b := statuses[0]
+
+	status := "Unknown"
+	if b.Charging {
+		status = "Charging"
+	} else if b.Discharging {
+		status = "Discharging"
+	} else if b.PowerOnline {
+		status = "On AC Power"
+	}
+
+	return PowerInfo{
+		Vendor:   "", // Not in BatteryStatus
+		Model:    "", // Not in BatteryStatus
+		Serial:   "", // Not in BatteryStatus
+		Status:   status,
+		Capacity: fmt.Sprintf("%d%%", b.RemainingCapacity),
 	}
 }
