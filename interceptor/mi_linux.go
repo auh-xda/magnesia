@@ -10,8 +10,10 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 
 	"github.com/auh-xda/magnesia/console"
+	"github.com/shirou/gopsutil/v3/cpu"
 )
 
 func ListServices() ([]LinuxService, error) {
@@ -60,14 +62,14 @@ func ListServices() ([]LinuxService, error) {
 	return services, nil
 }
 
-func GetPowerInfo() PowerInfo {
+func GetPowerInfo() (PowerInfo, error) {
 	return PowerInfo{
 		Vendor:   readFile("/sys/class/power_supply/BAT0/manufacturer"),
 		Model:    readFile("/sys/class/power_supply/BAT0/model_name"),
 		Serial:   readFile("/sys/class/power_supply/BAT0/serial_number"),
 		Status:   readFile("/sys/class/power_supply/BAT0/status"),
 		Capacity: readFile("/sys/class/power_supply/BAT0/capacity"),
-	}
+	}, nil
 }
 
 func readFile(path string) string {
@@ -78,7 +80,7 @@ func readFile(path string) string {
 	return strings.TrimSpace(string(data))
 }
 
-func GetCPUInfo() (CPUInfo, err) {
+func GetCPUInfo() (CPUInfo, error) {
 	listOfCpus, err := cpu.Info()
 	if err != nil || len(listOfCpus) == 0 {
 		return CPUInfo{}, err
@@ -127,6 +129,6 @@ func GetCPUInfo() (CPUInfo, err) {
 	return cpuInfo, nil
 }
 
-func Installations() {
-	return make(map[string]InstalledSoftware)
+func Installations() ([]InstalledSoftware, error) {
+	return []InstalledSoftware{}, nil
 }
