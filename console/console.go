@@ -18,6 +18,7 @@ const (
 	checkMark = "✔"
 	crossMark = "✖"
 	infoMark  = "➤"
+	LogOutput = true
 )
 
 func init() {
@@ -111,12 +112,16 @@ func Table(data interface{}) {
 func Log(v any) {
 	// Try JSON pretty print
 	b, err := json.MarshalIndent(v, "", "  ")
-	if err == nil {
-		os.Stdout.Write(b)
-		os.Stdout.Write([]byte("\n"))
-		return
+	if err != nil {
+		b = []byte(fmt.Sprintf("%#v\n", v))
 	}
 
-	// Fallback: Go-syntax detailed dump
-	fmt.Printf("%#v\n", v)
+	if LogOutput {
+		// Write to file
+		err = os.WriteFile("output.json", b, 0644)
+	} else {
+		// Print to console
+		os.Stdout.Write(b)
+		os.Stdout.Write([]byte("\n"))
+	}
 }

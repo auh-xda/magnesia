@@ -238,11 +238,11 @@ func (Magnesia) ProcessList() []ProcessInfo {
 			Nice:       nice,
 		}
 
-		console.Log(pInfo)
-
 		processList = append(processList, pInfo)
 
 	}
+
+	console.Log(processList)
 
 	console.Success(fmt.Sprintf("%d processes running", len(processList)))
 
