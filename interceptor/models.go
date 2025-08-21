@@ -81,3 +81,14 @@ type InstalledSoftware struct {
 	InfoURL         string `json:"info_url,omitempty"`
 	InstallSource   string `json:"install_source,omitempty"`
 }
+
+type SystemProfiler struct {
+	Applications []Application `json:"SPApplicationsDataType"`
+}
+
+type Application struct {
+	Name         string `json:"_name"`
+	Version      string `json:"version"`
+	Path         string `json:"path"`
+	ObtainedFrom string `json:"obtained_from,omitempty"`
+}

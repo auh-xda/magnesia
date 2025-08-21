@@ -14,6 +14,7 @@ import (
 
 	"github.com/auh-xda/magnesia/console"
 	"github.com/shirou/gopsutil/v3/cpu"
+	"github.com/shirou/gopsutil/v3/host"
 )
 
 func ListServices() ([]LinuxService, error) {
@@ -130,5 +131,59 @@ func GetCPUInfo() (CPUInfo, error) {
 }
 
 func Installations() ([]InstalledSoftware, error) {
-	return []InstalledSoftware{}, nil
+
+	info, _ := host.Info()
+
+	if info.PlatformFamily == "debian" {
+		cmd := exec.Command("dpkg-query", "-W", "-f=${binary:Package}\t${Version}\n")
+		var out bytes.Buffer
+		cmd.Stdout = &out
+		err := cmd.Run()
+		if err != nil {
+			return nil, err
+		}
+
+		var installed []InstalledSoftware
+		lines := strings.Split(out.String(), "\n")
+		for _, line := range lines {
+			if line == "" {
+				continue
+			}
+			parts := strings.Split(line, "\t")
+			if len(parts) == 2 {
+				installed = append(installed, InstalledSoftware{
+					Name:    parts[0],
+					Version: parts[1],
+				})
+			}
+		}
+		return installed, nil
+	} else {
+		cmd := exec.Command("rpm", "-qa", "--qf", "%{NAME}\t%{VERSION}-%{RELEASE}\n")
+		var out bytes.Buffer
+		cmd.Stdout = &out
+		err := cmd.Run()
+		if err != nil {
+			return nil, err
+		}
+
+		var installed []InstalledSoftware
+
+		lines := strings.Split(out.String(), "\n")
+		for _, line := range lines {
+			if line == "" {
+				continue
+			}
+			parts := strings.Split(line, "\t")
+			if len(parts) == 2 {
+				installed = append(installed, InstalledSoftware{
+					Name:    parts[0],
+					Version: parts[1],
+				})
+			}
+		}
+
+		return installed, nil
+
+	}
 }

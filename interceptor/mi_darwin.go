@@ -6,12 +6,15 @@ package interceptor
 import (
 	"bufio"
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"os/exec"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/auh-xda/magnesia/console"
+	"github.com/shirou/gopsutil/v3/cpu"
 )
 
 func ListServices() ([]DarwinService, error) {
@@ -59,11 +62,11 @@ func ListServices() ([]DarwinService, error) {
 	return services, nil
 }
 
-func GetPowerInfo() PowerInfo {
+func GetPowerInfo() (PowerInfo, error) {
 	pi := PowerInfo{}
 	out, err := exec.Command("ioreg", "-rc", "AppleSmartBattery").Output()
 	if err != nil {
-		return PowerInfo{}
+		return PowerInfo{}, err
 	}
 	lines := strings.Split(string(out), "\n")
 	for _, line := range lines {
@@ -88,7 +91,7 @@ func GetPowerInfo() PowerInfo {
 			}
 		}
 	}
-	return pi
+	return pi, nil
 }
 
 // Helpers to parse ioreg values
@@ -118,7 +121,7 @@ func getDarwinMaxCapacity(lines []string) int {
 	return 0
 }
 
-func GetCPUInfo() (CPUInfo, err) {
+func GetCPUInfo() (CPUInfo, error) {
 	listOfCpus, err := cpu.Info()
 	if err != nil || len(listOfCpus) == 0 {
 		return CPUInfo{}, err
@@ -167,6 +170,30 @@ func GetCPUInfo() (CPUInfo, err) {
 	return cpuInfo, nil
 }
 
-func Installations() {
-	return make(map[string]InstalledSoftware)
+func Installations() ([]InstalledSoftware, error) {
+	cmd := exec.Command("system_profiler", "SPApplicationsDataType", "-json")
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	if err := cmd.Run(); err != nil {
+		return nil, err
+	}
+
+	var data SystemProfiler
+	if err := json.Unmarshal(out.Bytes(), &data); err != nil {
+		return nil, err
+	}
+
+	var installed []InstalledSoftware
+
+	for _, app := range data.Applications {
+		installed = append(installed, InstalledSoftware{
+			Name:            app.Name,
+			Version:         app.Version,
+			Vendor:          app.ObtainedFrom,
+			InstallLocation: app.Path,
+			InstallSource:   "system_profiler",
+		})
+	}
+
+	return installed, nil
 }

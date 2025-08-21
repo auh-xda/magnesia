@@ -18,7 +18,7 @@ const (
 	checkMark = "✔"
 	crossMark = "✖"
 	infoMark  = "➤"
-	LogOutput = true
+	LogOutput = false
 )
 
 func init() {
@@ -118,7 +118,7 @@ func Log(v any) {
 
 	if LogOutput {
 		// Write to file
-		err = os.WriteFile("output.json", b, 0644)
+		os.WriteFile("output.json", b, 0644)
 	} else {
 		// Print to console
 		os.Stdout.Write(b)
