@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/auh-xda/magnesia/console"
+	"github.com/auh-xda/magnesia/nats"
 )
 
 func GetServices() {
@@ -14,12 +15,18 @@ func GetServices() {
 		return
 	}
 
+	nats.SendData(services, "services")
+
 	console.Success(fmt.Sprintf("%d service fetched successfully", len(services)))
 }
 
-func BatteryInfo() PowerInfo {
+func BatteryInfo(sendToNats bool) PowerInfo {
 
 	powerInfo, _ := GetPowerInfo()
+
+	if sendToNats {
+		nats.SendData(powerInfo, "power_info")
+	}
 
 	return powerInfo
 }
@@ -43,7 +50,7 @@ func InstalledSoftwareList() {
 		console.Error("failed to query installed software list")
 	}
 
-	console.Log(sw)
+	nats.SendData(sw, "installations")
 
 	console.Success(fmt.Sprintf("%d softwares are there ", len(sw)))
 }

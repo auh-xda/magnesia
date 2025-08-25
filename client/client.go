@@ -4,7 +4,7 @@ import (
 	"github.com/go-resty/resty/v2"
 )
 
-const momentum = "https://dummyjson.com"
+const momentum = "http://localhost:8000"
 
 func Init() *resty.Client {
 	return resty.New().

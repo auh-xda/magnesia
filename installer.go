@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/auh-xda/magnesia/client"
 	"github.com/auh-xda/magnesia/console"
@@ -32,13 +31,10 @@ func (magnesia Magnesia) Install() {
 		return
 	}
 
-	go magnesia.Intercept()
-	go magnesia.ProcessList()
-	go interceptor.GetServices()
-
-	console.Info("Waiting for go routines .... ")
-
-	time.Sleep(10 * time.Second)
+	magnesia.Intercept()
+	magnesia.ProcessList()
+	interceptor.GetServices()
+	interceptor.InstalledSoftwareList()
 }
 
 func createConfigFile(config Config) error {
@@ -83,6 +79,7 @@ func authenticateServer(Agent Magnesia) (Config, error) {
 	response, err := client.Post(authEndpoint, authPayload)
 
 	if err != nil {
+		console.Error("Some error occured while authenticating")
 		return config, err
 	}
 
@@ -91,14 +88,16 @@ func authenticateServer(Agent Magnesia) (Config, error) {
 	err = json.Unmarshal(response.Body(), &Auth)
 
 	if err != nil {
+		console.Error("Unmarshal error")
 		return config, fmt.Errorf("error unmarshaling JSON: %s", err)
 	}
 
 	if !Auth.Success {
+		console.Error(Auth.Message)
 		return config, fmt.Errorf("%s", Auth.Message)
 	}
 
-	console.Success("Authentication Sucessfull")
+	console.Success(Auth.Message)
 
 	return Auth.Config, nil
 }

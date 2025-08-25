@@ -13,17 +13,17 @@ type Config struct {
 	ClientID string `json:"client_id"`
 }
 
+type AuthResponse struct {
+	Config  Config `json:"config"`
+	Success bool   `json:"success"`
+	Message string `json:"message"`
+}
+
 type AuthRequest struct {
 	ClientID     string `json:"client_id"`
 	ClientSecret string `json:"client_secret"`
 	AuthToken    string `json:"auth_token"`
 	ApiKey       string `json:"api_key"`
-}
-
-type AuthResponse struct {
-	Config  Config `json:"config"`
-	Success bool   `json:"success"`
-	Message string `json:"message"`
 }
 
 type Magnesia struct {

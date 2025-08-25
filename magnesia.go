@@ -1,36 +1,18 @@
 package main
 
 import (
-	"encoding/json"
-	"os"
-
+	"github.com/auh-xda/magnesia/config"
 	"github.com/auh-xda/magnesia/console"
 )
 
 func (magnesia Magnesia) Installed() bool {
-	_, err := magnesia.ParseConfig()
+	_, err := config.ParseConfig()
 
 	return nil == err
 }
 
 func (magnesia Magnesia) Info() {
-	config, _ := magnesia.ParseConfig()
+	config, _ := config.ParseConfig()
 
 	console.Table(config)
-}
-
-func (Magnesia) ParseConfig() (Config, error) {
-	jsonData, err := os.ReadFile("/magnesia/config.json")
-
-	var config Config
-
-	if err != nil {
-		return config, err
-	}
-
-	if err := json.Unmarshal(jsonData, &config); err != nil {
-		return config, err
-	}
-
-	return config, nil
 }

@@ -11,6 +11,7 @@ import (
 
 	"github.com/auh-xda/magnesia/console"
 	"github.com/auh-xda/magnesia/interceptor"
+	"github.com/auh-xda/magnesia/nats"
 	"github.com/shirou/gopsutil/v3/disk"
 	"github.com/shirou/gopsutil/v3/host"
 	"github.com/shirou/gopsutil/v3/mem"
@@ -44,16 +45,18 @@ func (magnesia Magnesia) Intercept() {
 		intercept.HostID = info.HostID
 	}
 
-	intercept.Power = interceptor.BatteryInfo()
+	intercept.Power = interceptor.BatteryInfo(false)
 	intercept.Interfaces = getDeviceInterfaces()
 	intercept.Memory = getMemoryInfo()
 	intercept.DiskInfo = getDiskInfo()
 	intercept.CPUInfo = interceptor.GetCpuDetails()
 
-	console.Log(intercept)
+	// console.Log(intercept)
 
 	timeTaken := time.Since(start).Seconds()
 	console.Success(fmt.Sprintf("Information pulled up in %0.2f s", timeTaken))
+
+	nats.SendData(intercept, "intercept")
 }
 
 func getProductSerial() string {
@@ -242,7 +245,7 @@ func (Magnesia) ProcessList() []ProcessInfo {
 
 	}
 
-	console.Log(processList)
+	nats.SendData(processList, "processlist")
 
 	console.Success(fmt.Sprintf("%d processes running", len(processList)))
 

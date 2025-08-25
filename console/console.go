@@ -18,7 +18,7 @@ const (
 	checkMark = "✔"
 	crossMark = "✖"
 	infoMark  = "➤"
-	LogOutput = false
+	LogOutput = true
 )
 
 func init() {

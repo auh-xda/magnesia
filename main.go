@@ -18,9 +18,8 @@ import (
 )
 
 const (
-	authEndpoint   = "/c/0019-b33e-48e6-ba83"
-	natsWsEndpoint = "nats://127.0.0.1:4222"
-	version        = "0.1.0"
+	authEndpoint = "/api/auth/request"
+	version      = "0.1.0"
 )
 
 func main() {
@@ -58,8 +57,7 @@ func main() {
 		interceptor.GetServices()
 
 	case "power":
-		p := interceptor.BatteryInfo()
-		console.Log(p)
+		interceptor.BatteryInfo(true)
 
 	case "info":
 		magnesia.Info()
