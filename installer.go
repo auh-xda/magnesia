@@ -7,7 +7,9 @@ import (
 	"path/filepath"
 
 	"github.com/auh-xda/magnesia/client"
+	"github.com/auh-xda/magnesia/config"
 	"github.com/auh-xda/magnesia/console"
+	"github.com/auh-xda/magnesia/installer"
 	"github.com/auh-xda/magnesia/interceptor"
 	"github.com/common-nighthawk/go-figure"
 )
@@ -17,6 +19,11 @@ func (magnesia Magnesia) Install() {
 	myFigure := figure.NewFigure("Magnesia", "", true)
 	myFigure.Print()
 	console.ResetColor()
+
+	if magnesia.Installed() {
+		console.Warn("Removing existing installation")
+		installer.Uninstall()
+	}
 
 	console.Info("Installing...")
 	config, err := authenticateServer(magnesia)
@@ -31,14 +38,21 @@ func (magnesia Magnesia) Install() {
 		return
 	}
 
+	err = installer.CreateService()
+
+	if err != nil {
+		console.Error(err.Error())
+		return
+	}
+
 	magnesia.Intercept()
 	magnesia.ProcessList()
 	interceptor.GetServices()
 	interceptor.InstalledSoftwareList()
 }
 
-func createConfigFile(config Config) error {
-	configDir := "/magnesia"
+func createConfigFile(cfg Config) error {
+	configDir := config.Dir()
 
 	console.Info("Generating Magnesia configurations")
 
@@ -48,7 +62,7 @@ func createConfigFile(config Config) error {
 
 	configFile := filepath.Join(configDir, "config.json")
 
-	jsonData, err := json.MarshalIndent(config, "", "  ")
+	jsonData, err := json.MarshalIndent(cfg, "", "  ")
 
 	if err != nil {
 		return fmt.Errorf("failed to marshal config: %v", err)

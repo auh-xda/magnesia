@@ -14,11 +14,13 @@ const (
 	yellow = "\033[33m"
 	reset  = "\033[0m"
 	cyan   = "\033[36m"
+	orange = "\033[38;5;208m"
 
-	checkMark = "✔"
-	crossMark = "✖"
-	infoMark  = "➤"
-	LogOutput = true
+	warningMark = "⚠"
+	checkMark   = "✔"
+	crossMark   = "✖"
+	infoMark    = "➤"
+	LogOutput   = true
 )
 
 func init() {
@@ -35,6 +37,10 @@ func Success(message string) {
 
 func Error(message string) {
 	fmt.Println(red, crossMark, message, reset)
+}
+
+func Warn(message string) {
+	fmt.Println(orange, warningMark, message, reset)
 }
 
 func SetColor(color string) {

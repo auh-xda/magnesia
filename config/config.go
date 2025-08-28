@@ -2,7 +2,10 @@ package config
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
+	"path/filepath"
+	"runtime"
 )
 
 type Config struct {
@@ -15,7 +18,9 @@ type Config struct {
 }
 
 func ParseConfig() (Config, error) {
-	jsonData, err := os.ReadFile("/magnesia/config.json")
+	path := Path()
+
+	jsonData, err := os.ReadFile(path)
 
 	var config Config
 
@@ -28,4 +33,59 @@ func ParseConfig() (Config, error) {
 	}
 
 	return config, nil
+}
+
+func State() string {
+	dir := Dir()
+	switch runtime.GOOS {
+	case "windows":
+		// Prefer ProgramData
+		programData := os.Getenv("ProgramData")
+		if programData == "" {
+			programData = `C:\ProgramData`
+		}
+		return filepath.Join(dir, "state.json")
+
+	default:
+		// Linux / Unix
+		return fmt.Sprintf("%s/state.json", dir)
+	}
+}
+
+func Path() string {
+	dir := Dir()
+
+	switch runtime.GOOS {
+	case "windows":
+		// Prefer ProgramData
+		programData := os.Getenv("ProgramData")
+		if programData == "" {
+			programData = `C:\ProgramData`
+		}
+		return filepath.Join(dir, "config.json")
+
+	default:
+		// Linux / Unix
+		return fmt.Sprintf("%s/config.json", dir)
+	}
+}
+
+func Dir() string {
+	switch runtime.GOOS {
+	case "windows":
+		// Prefer ProgramData
+		programData := os.Getenv("ProgramData")
+		if programData == "" {
+			programData = `C:\ProgramData`
+		}
+		return filepath.Join(programData, "Magnesia")
+
+	case "darwin":
+		// macOS
+		return "/Library/Application Support/Magnesia"
+
+	default:
+		// Linux / Unix
+		return "/etc/magnesia"
+	}
 }
