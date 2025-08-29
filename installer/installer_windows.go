@@ -5,6 +5,7 @@ package installer
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -13,6 +14,26 @@ import (
 	"github.com/auh-xda/magnesia/console"
 )
 
+func copyFile(src, dst string) error {
+	in, err := os.Open(src)
+	if err != nil {
+		return fmt.Errorf("open source: %w", err)
+	}
+	defer in.Close()
+
+	out, err := os.Create(dst)
+	if err != nil {
+		return fmt.Errorf("create target: %w", err)
+	}
+	defer out.Close()
+
+	if _, err = io.Copy(out, in); err != nil {
+		return fmt.Errorf("copy contents: %w", err)
+	}
+
+	return nil
+}
+
 func CreateService() error {
 	exePath, err := os.Executable()
 	if err != nil {
@@ -20,10 +41,14 @@ func CreateService() error {
 	}
 
 	targetBin := `C:\Program Files\Magnesia\magnesia.exe`
-	if err := os.MkdirAll(filepath.Dir(targetBin), 0755); err != nil {
+
+	// Ensure target directory exists
+	if err := os.MkdirAll(filepath.Dir(targetBin), os.ModePerm); err != nil {
 		return fmt.Errorf("failed to create directory: %v", err)
 	}
-	if err := exec.Command("copy", exePath, targetBin).Run(); err != nil {
+
+	// Copy binary using Go-native function
+	if err := copyFile(exePath, targetBin); err != nil {
 		return fmt.Errorf("failed to copy binary: %v", err)
 	}
 

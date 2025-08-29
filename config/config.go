@@ -44,6 +44,14 @@ func State() string {
 		if programData == "" {
 			programData = `C:\ProgramData`
 		}
+
+		// Create app-specific folder inside ProgramData
+		appDir := filepath.Join(programData, "Magnesia")
+		if _, err := os.Stat(appDir); os.IsNotExist(err) {
+			if err := os.MkdirAll(appDir, 0755); err != nil {
+				return filepath.Join(os.TempDir(), "magnesia_state.json") // fallback
+			}
+		}
 		return filepath.Join(dir, "state.json")
 
 	default:
